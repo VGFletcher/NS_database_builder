@@ -272,8 +272,8 @@ size = comm.Get_size()
 #Parse args
 parser = argparse.ArgumentParser(description='Create a database from nested sampling output')
 
-parser.add_argument('-f', '--traj_regex', action='store', help="Regex to identify the trajectory files to search", type=str, required=True)
-parser.add_argument('-db', '--db_name', action='store', help="Name of the output database", type=str, required=True)
+parser.add_argument('-i', '--traj_regex', action='store', help="Regex to identify the trajectory files to search", type=str, required=True)
+parser.add_argument('-o', '--db_name', action='store', help="Name of the output database", type=str, required=True)
 parser.add_argument('-s', '--db_size', action='store', help="how many configs to put in the database", type=int, required=True)
 
 parser.add_argument('-lt', '--low_temp', action='store', help="lower temperature limit to restrict search", type=int, default=None)
