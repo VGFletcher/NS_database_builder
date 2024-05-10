@@ -1,5 +1,7 @@
 ### This repository consists of code so that you can form databases of configurations from the output of nested sampling runs.
 
+<hr>
+
 # database_builder.py
 Assuming you have a collection of trajectory files from a nested sampling run, you can run this script to search all of the trajectory files and create a database, of a given size, consisting of configurations that are as close to equally spaced in iteration number as possible. <br /> 
 The possibility of getting exactly equal spacing is subject to your temperature restrictions, the configuration output frequency from the nested sampling run, and the requested database size.
