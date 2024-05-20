@@ -1,6 +1,6 @@
-#Traj file concatenator code authored by @V.G.Fletcher
+#xrd calculator for pymatnest authored by @V.G.Fletcher
 #The purpose is to take the trajectories outputted from a nested sampling run and create a single file that contains...
-#...all configurations in iteration order
+#...the xrd data of every configuration in iteration order
 
 import time
 import numpy as np
