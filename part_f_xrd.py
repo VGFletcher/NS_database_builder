@@ -18,7 +18,10 @@ def read_energies(file_name):
 
     energies = []
     for line in f:
-        i, ene, vol = line.strip().split()
+        try:
+            i, ene, vol = line.strip().split()
+        except:
+            continue
         energies.append(float(ene))
     return walkers, np.array(energies)
 
