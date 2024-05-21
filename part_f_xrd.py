@@ -2,7 +2,7 @@
 #The purpose is to take the trajectories outputted from a nested sampling run and create a single file that contains...
 #...the xrd data of every configuration in iteration order
 
-import time
+import time, os
 import numpy as np
 from scipy import constants as sc
 from mpi4py import MPI
@@ -129,6 +129,7 @@ if rank == 0:
         thread_xrd_dat = np.loadtxt(f"{res_prefix}.{i}.npy")
         np.savetxt(master_xrd, thread_xrd_dat)
         print(f"concatenated rank {i} data")
+        os.remove(f"{res_prefix}.{i}.npy")
     master_xrd.close()
 comm.barrier()
     

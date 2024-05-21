@@ -2,7 +2,7 @@
 #The purpose is to take the trajectories outputted from a nested sampling run and create a single file that contains...
 #...the xrd data of every configuration in iteration order
 
-import time
+import time, os
 import numpy as np
 import ase
 from ase.io import read, write
@@ -83,6 +83,7 @@ def calc_xrd(concat_name, results_prefix, comm, rank, size, verbose=False):
             thread_xrd_dat = np.loadtxt(f"{results_prefix}.{i}.npy")
             np.savetxt(master_xrd, thread_xrd_dat)
             print(f"concatenated rank {i} data")
+            os.remove(f"{results_prefix}.{i}.npy")
         master_xrd.close()
     comm.barrier()
 
