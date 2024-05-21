@@ -4,6 +4,8 @@
 
 import time, os
 import numpy as np
+import ase
+from ase.io import read
 from scipy import constants as sc
 from mpi4py import MPI
 import argparse
@@ -11,19 +13,14 @@ import argparse
 Kb = sc.physical_constants['Boltzmann constant in eV/K'][0]
 
 def read_energies(file_name):
-    f = open(file_name)
-
-    params = f.readline().strip().split()
-    walkers = int(params[0])
-
+    strucs = ase.io.read(file_name, index=':')
     energies = []
-    for line in f:
-        try:
-            i, ene, vol = line.strip().split()
-        except:
-            continue
-        energies.append(float(ene))
-    return walkers, np.array(energies)
+    iterations = []
+    for struc in strucs:
+        energies.append(struc.info['ns_energy'])
+        iterations.append(struc.info['iter'])
+    
+    return np.array(iterations), np.array(energies)
 
 def log_weights(n_Es, K):
     i_vals = np.arange(0, n_Es, 1)
@@ -38,7 +35,7 @@ def Z_vals(B, log_weights, energies):
     log_z = log_weights - (energies * B)
     shift = np.max(log_z)
     
-    Z = np.exp(log_z-shift)[10::10]
+    Z = np.exp(log_z-shift)
     sum_z = np.sum(Z)
     return Z, sum_z
     
@@ -50,7 +47,8 @@ size = comm.Get_size()
 #Parse args
 parser = argparse.ArgumentParser(description='Create temperature weighted XRD data from NS')
 
-parser.add_argument('-i', '--energies_file', action='store', help="Name of the NS energies file", type=str, required=True)
+parser.add_argument('-i', '--traj_file', action='store', help="Name of the concat. traj file", type=str, required=True)
+parser.add_argument('-k', '--n_walkers', action='store', help="Number of walkers used in the sampling", type=int, required=True)
 parser.add_argument('-xrd', '--xrd_data', action='store', help="Name of the file with the xrd data", type=str, required=True)
 
 parser.add_argument('-ti', '--starting_temp', action='store', help="Starting temp for analysis", type=float, required=True)
@@ -63,7 +61,8 @@ parser.add_argument('-V', '--verb', action='store_true', help="Verbosity of sear
 
 args = parser.parse_args()
 
-energies_file = args.energies_file
+traj_file = args.traj_file
+K = args.n_walkers
 xrd_file = args.xrd_data
 
 start_t = args.starting_temp
@@ -91,15 +90,13 @@ if verbose:
     print(f"Rank {rank} starting from {start_t} K to {final_t} K with step {delta_t} K")
 
 #Read the energies file
-K, energies = read_energies(energies_file)
+iterations, energies = read_energies(traj_file)
+n_Es = iterations[-1] + 1
 if verbose and rank==0:
     print('Read energies file')
-    
-#Get the number of iterations
-n_Es = len(energies)
 
 #Calculate the temperature independent weights
-log_w = log_weights(n_Es, K)
+log_w = log_weights(n_Es, K)[iterations]
 if verbose and rank==0:
     print('Calculated t independent weights')
     
