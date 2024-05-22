@@ -17,7 +17,12 @@ def read_energies(file_name):
     energies = []
     iterations = []
     for struc in strucs:
-        energies.append(struc.info['ns_energy'])
+        PE = struc.info['ns_energy']
+        PR = struc.info['ns_P']
+        VO = struc.info['volume']
+
+        enth = PE + (PR * VO)
+        energies.append(enth)
         iterations.append(struc.info['iter'])
     
     return np.array(iterations), np.array(energies)
