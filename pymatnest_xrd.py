@@ -62,8 +62,8 @@ def calc_xrd(concat_name, results_prefix, comm, rank, size, verbose=False):
         twotheta, inten, reflections = xtl.Scatter.powder(units='twotheta', pixels=200)
 
         #Scale the results
-        scale_f = np.max(inten)
-        inten = inten/scale_f
+        #scale_f = np.max(inten)
+        #inten = inten/scale_f
 
         intensities.append(inten)
     np.savetxt(thread_xrd, np.reshape(intensities, (configs_per_thread,len(inten))))
