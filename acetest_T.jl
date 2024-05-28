@@ -10,7 +10,6 @@ using Distributed
 #Pkg.Registry.add("General")
 #Pkg.Registry.add(Pkg.RegistrySpec(url="https://github.com/ACEsuit/ACEregistry"))
 #Pkg.add("ACEpotentials")
-#Pkg.add("JLD2")
 #Pkg.add("Glob")
 #Pkg.add("ArgParse")
 ##########################
@@ -20,7 +19,6 @@ using Distributed
 #####IMPORTING_PACKAGES#####
 ############################
 @everywhere using ACEpotentials
-@everywhere using JLD2
 using Glob
 using ArgParse
 ############################
@@ -35,19 +33,11 @@ s = ArgParseSettings()
     help = "The regex used to identify all traj files in extxyz format"
     arg_type = AbstractString
     required = true
-    
-    "--ace_model", "-m"
-    help = "The trained ACE model in .jld2 format"
-    arg_type = AbstractString
-    required = true
 end
 
 parsed_args = parse_args(ARGS, s)
 
 files = Glob.glob(parsed_args["traj_regex"])
-model = load_object(parsed_args["ace_model"])
-
-poten = model.potential
 ###########################
 ###########################
 
