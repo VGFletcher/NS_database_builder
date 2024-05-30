@@ -121,7 +121,7 @@ for i in range(t_per_thread):
     B = 1.0/(Kb*T)
     Z, sum_Z = Z_vals(B, log_w, energies)
     
-    weighted_xrd = np.mean(xrd_dat[1:] * np.reshape(Z, (len(Z),1)), axis=0)
+    weighted_xrd = np.sum(xrd_dat[1:] * np.reshape(Z, (len(Z),1)), axis=0)/sum_Z
     np.savetxt(res_file, np.reshape(weighted_xrd, (1, len(weighted_xrd))))
 res_file.close()
 comm.barrier()
