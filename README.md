@@ -167,3 +167,32 @@ To use this code you provide:
 ## Ideal examples would be: <br />
 To predict the temperature weighted uncertainty of configurations in files matching the expression "\*.traj.\*.extxyz", having access to a 40 core node: <br />
 `julia -p 40 --project=. ./acetest_T.jl -i "*.traj.*.extxyz"`<br />
+
+<hr />
+
+# db_builder_sigma.py
+Assuming you have calculated the temperature weighted uncertainties of your trajectory files, you can use this function to pick the top N configs within a set temperature range.<br /> 
+
+> [!NOTE]
+> ### Required Python modules
+> - ASE
+> - MPI4Py
+> - Numpy
+> 
+> It is important that the number of files to search can be equally divided by the thread number. Due to the amount of data in a nested sampling output file, an unbalanced search scheme has not been implemented.
+
+To use this code you provide: 
+- [ -i ] Regex to identify the trajectory files to look through
+- [ -o ] The name of the file to output the selected configs to
+- [ -s ] The number of configs to select
+
+Optionally, if you have calculated the temperature of the configurations, you can restrict the search to a given temperature range by providing:
+- [ -lt ] The lower temperature limit
+- [ -ut ] The upper temperture limit
+
+## Ideal examples would be: <br />
+To generate a database of 200 configurations in a file called "uq_db.extxyz", by searching for files that match the expression "\*.traj.\*.extxyz" of which I expect there to be 24*n files: <br />
+`mpirun -np 24 python3 db_builder_sigma.py -i "*.traj.*.extxyz" -s 200 -o "uq_db.extxyz"`<br />
+
+And to do the same again but restrict the search to only configurations that have temperature between 100 and 5,000 k<br />
+`mpirun -np 24 python3 database_builder.py -i "*.traj.*.extxyz" -s 200 -o "uq_db.extxyz" -lt 100 -ut 5000`
