@@ -58,7 +58,7 @@ def calc_xrd(concat_name, results_prefix, comm, rank, size, verbose=False):
         xtl.new_atoms(u=positions[:,0],v=positions[:,1],w=positions[:,2],type=types)
 
         #Setup and perform x-ray spectra
-        xtl.Scatter.setup_scatter(scattering_type='x-ray', wavelength_a=0.398, min_twotheta=10, max_twotheta=30)
+        xtl.Scatter.setup_scatter(scattering_type='x-ray', wavelength_a=0.620, min_twotheta=10, max_twotheta=30)
         twotheta, inten, reflections = xtl.Scatter.powder(units='twotheta', pixels=200)
 
         #Scale the results
