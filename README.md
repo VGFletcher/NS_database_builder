@@ -196,3 +196,25 @@ To generate a database of 200 configurations in a file called "uq_db.extxyz", by
 
 And to do the same again but restrict the search to only configurations that have temperature between 100 and 5,000 k<br />
 `mpirun -np 24 python3 database_builder.py -i "*.traj.*.extxyz" -s 200 -o "uq_db.extxyz" -lt 100 -ut 5000`
+
+<hr />
+
+# acefit.jl
+Assuming you have a database, this is a simple example of the ACE fitting Julia code.<br /> 
+
+> [!NOTE]
+> ### Required Julia modules
+> - [ACEpotentials](https://github.com/ACEsuit/ACEregistry)
+> - JLD2
+> - Suppressor
+>
+> Due to the number of parameters and complexity of the program you must modify most of the parameters in the file for your specific system. This should be used as a bare-bones example of the ACE fitting procedure.
+
+To use this code you provide: 
+- Arg1: An integer value for the ACE order
+- Arg2: An integer value for the ACE degree
+- Arg3: A floating point number for the percentage of test configurations
+
+## Ideal examples would be: <br />
+To fit a model with order 3 degree 7 with 20% of the database being for testing and having access to a 40 core node: <br />
+`julia -p 40 --project=. ./acefit.jl 3 7 0.2`<br />
