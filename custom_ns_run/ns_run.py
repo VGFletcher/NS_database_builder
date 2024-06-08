@@ -1101,10 +1101,6 @@ def do_MD_atom_walk(at, movement_args, Emax, KEmax):
         reject_pot_hole = False
 
     reject_bl = reject_len or reject_pot_hole
-    if reject_bl:
-        print(rank, 'rejected')
-    else:
-        print(rank, 'accepted')
 
     if reject_pot_hole and not (reject_fuzz or reject_Emax or reject_KEmax or reject_len):
         ase.io.write(f"potential_holes.traj.{rank}.extxyz", at, parallel=False, format=ns_args['config_file_format'], append=True)
@@ -1487,10 +1483,6 @@ def do_cell_step(at, Emax, p_accept, transform):
     else:
         accept_len = True
         accept_pot_hole = True
-    if accept_len and accept_pot_hole:
-        print(rank, 'rank accepted cell')
-    else:
-        print(rank, 'rank rejected cell')
     ###################################################################################################
     if Emax is None:
         return
@@ -3878,7 +3870,6 @@ def main():
                     energy = float('nan')
                     n_try = 0
                     ###################################VGF-MODIFIED###############################
-                    VGF_counter = 0
                     reject_len = True
                     reject_pot_hole = True
                     while (n_try < ns_args['random_init_max_n_tries']) and (((math.isnan(energy) or energy > ns_args['start_energy_ceiling'])) or reject_len or reject_pot_hole):
@@ -3904,12 +3895,10 @@ def main():
                         else:
                             reject_len = False
                             reject_pot_hole = False
-                        if reject_len or reject_pot_hole:
-                            VGF_counter += 1
                         #####################################################################
                         energy = eval_energy(at)
                         n_try += 1
-                    print(f'{VGF_counter} configs were rejected due to cutoff, out of {n_try} tries')
+
                     if math.isnan(energy) or energy > ns_args['start_energy_ceiling'] or reject_len or reject_pot_hole:
                         sys.stderr.write("WARNING: rank %d failed to generate initial config by random positions under max energy %f in %d tries\n" % (rank, ns_args['start_energy_ceiling'], ns_args['random_init_max_n_tries']))
 
