@@ -36,7 +36,7 @@ erefs = Dict("Mg" => -1688.821130128)
 elements = [:Mg]
 rcut = 8.2
 
-e_weight = 30.0
+e_weight = 9.0
 f_weight = 1.0
 v_weight = 1.0
 blr_tol = 1e-3
@@ -48,7 +48,7 @@ repul_weight = 0.0
 #####################
 #####################
 
-data_keys = (energy_key = "new_energy", force_key = "new_forces")
+data_keys = (energy_key = "new_energy", force_key = "new_forces", virial_key = "virial")
 
 #rcut = cutoff of interactions
 #order = body order of interactions, creat n+1 body potential
@@ -118,6 +118,7 @@ end
 
 export2lammps(output_name * ".yace", model)
 save_object(model_name * ".jld2", model)
+save_potential(output_name * ".json", model)
 
 ###########################
 ###########################
