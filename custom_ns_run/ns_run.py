@@ -1096,18 +1096,16 @@ def do_MD_atom_walk(at, movement_args, Emax, KEmax):
         perc_holes = sum(num_bonds)/len(num_bonds)
 
         reject_pot_hole = perc_holes > ns_args['hole_tolerance']
+
+        if reject_pot_hole and not (reject_fuzz or reject_Emax or reject_KEmax or reject_len):
+            ase.io.write(f"potential_holes.traj.{rank}.extxyz", at, parallel=False, format=ns_args['config_file_format'], append=True)
     else:
         reject_len = False
         reject_pot_hole = False
-
-    reject_bl = reject_len or reject_pot_hole
-
-    if reject_pot_hole and not (reject_fuzz or reject_Emax or reject_KEmax or reject_len):
-        ase.io.write(f"potential_holes.traj.{rank}.extxyz", at, parallel=False, format=ns_args['config_file_format'], append=True)
     #####################################################################################
 
     #DOC \item if reject
-    if reject_fuzz or reject_Emax or reject_KEmax or reject_bl:  # reject
+    if reject_fuzz or reject_Emax or reject_KEmax or reject_len or reject_pot_hole:  # reject
         #DOC \item set positions, velocities, energy back to value before perturbation (maybe should be after?)
         # print(print_prefix, ": WARNING: reject MD traj Emax ", Emax, " initial E ", orig_E, " velo perturbed E ", pre_MD_E, " final E ",final_E, " KEmax ", KEmax, " KE ", final_KE)
         at.set_positions(pre_MD_pos)
@@ -2137,10 +2135,10 @@ def full_auto_set_stepsizes(walkers, walk_stats, movement_args, comm, Emax, KEma
                 #update step length
                 dir = None
                 if rate < min_rate:
-                    exp = -1.0
+                    exp = -1
                     dir = "down"
                 elif rate >= max_rate:
-                    exp = 1.0
+                    exp = 1
                     dir = "up"
                 else:
                     exp = None
@@ -2225,10 +2223,10 @@ def adjust_step_sizes(walk_stats, movement_args, comm, do_print_rate=True, monit
             dir = None
             exp = 0.0
             if rate < min_rate:
-                exp = -1.0
+                exp = -1
                 dir = "down"
             elif rate >= max_rate:
-                exp = 1.0
+                exp = 1
                 dir = "up"
 
             orig_value = movement_args[key+"_"+suffix]
@@ -4197,15 +4195,18 @@ def main():
             else:  # restart, so the existing file should be appended
                 try:
                     energy_io = open(ns_args['out_file_prefix']+'energies', 'r+')
+                    line_pos = 0
                     tmp_iter = 0
                     line = energy_io.readline()  # read the first line of nwalker,ncull..etc information
                     i = 0
+                    line_pos += len(line)
                     while True:  # we do create an infinite loop here :(
                         line = energy_io.readline()            # read lines one by one
                         if not line:                           # something went wrong, exit the infinit loop
                             print("WARNING: end of .energies file reached without finding the iteration number", start_first_iter)
                             break
                         i = i + 1
+                        line_pos += len(line)                  #Track the position of the end of each line
                         if i % 10000 == 0:
                             print(rank, "reading .energies file line %d" % i)
                         if i % n_cull == 0:                    # if this is n_cull-th line, examine the stored iteration
@@ -4213,6 +4214,7 @@ def main():
                             tmp_iter = int(tmp_split[0])       # tmp_iter contains the iteration number of the line as an integer number
                         if tmp_iter == start_first_iter - 1:   # if this is the iteration same as in the snapshot,
                             print(rank, "truncating energy file at line ", i)
+                            energy_io.seek(line_pos, 0)         #Move the file pointer to the end of the line
                             energy_io.truncate()                #delete the rest of the file, as we are restarting from here
                             break
                 except FileNotFoundError:
