@@ -1,6 +1,8 @@
-#Temperature calculator authored by @V.G.Fletcher
-#The purpose is to take the data file produced by ns_analyse and use this to predict the temperature...
-#...of the sampled configurations
+#This code takes the output from a pymatnest nested sampling run and uses the temperature-enthalpy
+#relationship to assign a temperature value to each configuration
+
+#This code was authored by @V.G.Fletcher
+#UK Ministry of Defence Copr. Crown owned copyright 2024/AWE
 
 import time, glob, os
 import numpy as np

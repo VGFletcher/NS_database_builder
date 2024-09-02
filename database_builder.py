@@ -1,7 +1,10 @@
-#Database constructor code authored by @V.G.Fletcher
-#The purpose is to take an output from a nested sampling run and create a database of configurations...
-#...that are equally spaced in iteration number
-#Optionally, you can set a temperature range, to exclude irrelevant configurations
+#This code takes in a series of trajectory files from a pymatnest nested sampling run and creates a
+#database of configurations that are equally spaced in iteration number, within a given temperature
+#range
+#pymatnest: https://github.com/libAtoms/pymatnest/tree/master
+
+#This code was authored by @V.G.Fletcher
+#UK Ministry of Defence Copr. Crown owned copyright 2024/AWE
 
 import sys, time, glob
 import numpy as np

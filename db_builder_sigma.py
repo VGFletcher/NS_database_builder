@@ -1,6 +1,9 @@
-#uncertainty database builder code authored by @V.G.Fletcher
-#The purpose is to take the trajectories outputted from a nested sampling run and create a single file that contains...
-#...a specific number of the most uncertain configurations
+#This code takes in a series of trajectory files from a pymatnest nested sampling run, with the
+#temperature weighted uncertainty calculated, and outputs a given number of the highest value configs.
+#pymatnest: https://github.com/libAtoms/pymatnest/tree/master
+
+#This code was authored by @V.G.Fletcher
+#UK Ministry of Defence Copr. Crown owned copyright 2024/AWE
 
 import time, glob
 import numpy as np

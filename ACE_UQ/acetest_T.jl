@@ -1,5 +1,9 @@
-#Code authored by @V.G.Fletcher for the purpose of evaluating the weighted uncertainty of a...
-#...set of nested sampling configurations
+#This code evaluates the temperature weighted uncertainty (sigma_T) of a database of configurations
+#with given sigma values where sigma_T = 1 - exp(-sigma/(Kb*T))
+
+#This code was authored by @V.G.Fletcher
+#UK Ministry of Defence Copr. Crown owned copyright 2024/AWE
+
 using Distributed
 
 @everywhere import Pkg

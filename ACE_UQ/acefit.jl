@@ -1,3 +1,9 @@
+#This code is an example use of the acefit.jl code package for fitting a magnesium ACE potential
+#acefit.jl: https://github.com/ACEsuit/ACEfit.jl
+
+#This example was authored by @V.G.Fletcher
+#UK Ministry of Defence Copr. Crown owned copyright 2024/AWE
+
 import Pkg
 
 ##########################

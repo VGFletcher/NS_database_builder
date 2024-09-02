@@ -1,5 +1,10 @@
-#Code authored by @V.G.Fletcher for the purpose of evaluating the uncertainty of a set of...
-#...nested sampling configurations
+#This code is an example use of the acefit.jl code package to evaluate the uncertainty of a database
+#of configurations based on a fitted ACE potential committee
+#acefit.jl: https://github.com/ACEsuit/ACEfit.jl
+
+#This code was authored by @V.G.Fletcher
+#UK Ministry of Defence Copr. Crown owned copyright 2024/AWE
+
 using Distributed
 
 @everywhere import Pkg

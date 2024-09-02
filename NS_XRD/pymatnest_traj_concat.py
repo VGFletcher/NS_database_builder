@@ -1,6 +1,9 @@
-#Traj file concatenator code authored by @V.G.Fletcher
-#The purpose is to take the trajectories outputted from a nested sampling run and create a single file that contains...
-#...all configurations in iteration order
+#This code takes in the trajectory ouput files from a multithreaded pymatnest nested sampling run,
+#sorts them by iteration number, and saves them to a single file
+#pymatnest: https://github.com/libAtoms/pymatnest/tree/master
+
+#This code was authored by @V.G.Fletcher
+#UK Ministry of Defence Copr. Crown owned copyright 2024/AWE
 
 import time, glob
 import numpy as np

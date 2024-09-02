@@ -1,6 +1,12 @@
-#xrd calculator for pymatnest authored by @V.G.Fletcher
-#The purpose is to take the trajectories outputted from a nested sampling run and create a single file that contains...
-#...the xrd data of every configuration in iteration order
+#This code takes in a series of trajectory files (ideally from a pymatnest nested sampling run)
+#and calculates the XRD pattern using dans_diffraction package
+#Setting have been chosen specifically for a study of magnesium and will need to be changed manually
+#by a new user
+#pymatnest: https://github.com/libAtoms/pymatnest/tree/master
+#dans_diffraction: https://pypi.org/project/Dans-Diffraction/
+
+#This code was authored by @V.G.Fletcher
+#UK Ministry of Defence Copr. Crown owned copyright 2024/AWE
 
 import time, os
 import numpy as np

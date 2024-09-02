@@ -1,6 +1,9 @@
-#xrd calculator for pymatnest authored by @V.G.Fletcher
-#The purpose is to take the trajectories outputted from a nested sampling run and create a single file that contains...
-#...the xrd data of every configuration in iteration order
+#This code takes in a matrix of XRD spectra, from a pymatnest nested sampling run, in iteration order,
+#and produces the thermally averaged XRD spectra using the nested sampling weights
+#pymatnest: https://github.com/libAtoms/pymatnest/tree/master
+
+#This code was authored by @V.G.Fletcher, with the pymatnest ns_analyse file as a starting point
+#UK Ministry of Defence Copr. Crown owned copyright 2024/AWE
 
 import time, os
 import numpy as np
