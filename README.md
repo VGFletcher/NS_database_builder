@@ -1,4 +1,6 @@
 ### This repository consists of code so that you can form databases of configurations from the output of nested sampling runs.
+Code authored by V.G.Fletcher <br /> 
+UK Ministry of Defence © Crown owned copyright 2024/AWE
 
 <hr>
 
