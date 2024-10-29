@@ -54,7 +54,7 @@ repul_weight = 0.0
 #####################
 #####################
 
-data_keys = (energy_key = "new_energy", force_key = "new_forces", virial_key = "virial")
+data_keys = (energy_key = "dft_energy", force_key = "dft_forces", virial_key = "dft_virial")
 
 #rcut = cutoff of interactions
 #order = body order of interactions, creat n+1 body potential

@@ -89,7 +89,7 @@ def db_builder(traj_files, db_name, db_size, comm, rank, size, temp_low_lim=None
         for j in range(loop_len):
             struc = all_strucs[j]
             try:
-                w_sigma = struc.info['w_sigma']
+                w_sigma = struc.info['committee_std']
             except:
                 w_sigma = -np.inf
                 
