@@ -120,11 +120,14 @@ if test_ratio != 0
        pset = at.data["config_type"].data
        push!(sorted_dataset[pset], at)
    end
-   
-   if haskey(sorted_dataset, "mg16_hole")
-      hset = sorted_dataset["mg16_hole"]
-      global train_db = cat(train_db, hset, dims=1)
-      delete!(sorted_dataset, "mg16_hole")
+
+   for pset in keys(sorted_dataset)
+       m = match(r"_hole$", pset)
+       if m != nothing
+       	  hset = sorted_dataset[pset]
+      	  global train_db = cat(train_db, hset, dims=1)
+      	  delete!(sorted_dataset, pset)
+       end	 
    end
   
    for pset in keys(sorted_dataset)
