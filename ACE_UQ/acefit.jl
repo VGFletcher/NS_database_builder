@@ -14,6 +14,7 @@ import Pkg
 #Pkg.add("ACEpotentials")
 #Pkg.add("Suppressor")
 #Pkg.add("JLD2")
+#Pkg.add("ArgParse")
 ##########################
 ##########################
 
@@ -25,15 +26,41 @@ using ACEpotentials
 using Suppressor
 using Random
 using JLD2
+using ArgParse
 ############################
 ############################
+
+sett = ArgParseSettings()
+@add_arg_table sett begin
+    "-o"
+        help = "Order of the ACE potential"
+        arg_type = Int64
+        required = true
+    "-d"
+        help = "Degree of the ACE potential"
+        arg_type = Int64
+        required = true
+    "-r"
+        help = "Test Ratio"
+        arg_type = Float64
+        required = false
+        default = 0.0
+    "-a"
+        help = "Exponential weighting scheme alpha value"
+        arg_type = Float64
+        required = false
+        default = nothing
+end
+parsed_args = parse_args(ARGS, sett)
 
 ########################
 #####FIT_PARAMETERS#####
 ########################
-order = parse(Int64, ARGS[1])
-degree = parse(Int64, ARGS[2])
-test_ratio = parse(Float64, ARGS[3])
+
+order      = parsed_args["o"]
+degree     = parsed_args["d"]
+test_ratio = parsed_args["r"]
+alpha      = parsed_args["a"]
 
 dataset_name = "master.edb.extxyz"
 output_name = "o$(order)_d$(degree)"
@@ -52,9 +79,6 @@ n_members = 10
 repul_rest = false
 repul_weight = 0.0
 
-#0.5 is too extreme, 0.2 is reasonable
-#higher numbers reduce importance of high temp configs
-alpha = 0.4
 #####################
 #####################
 
@@ -80,17 +104,67 @@ solver = ACEfit.BLR(tol=blr_tol, committee_size=n_members, factorization=:svd)
 #####TEST_TRAIN_SPLIT#####
 ##########################
 dataset = read_extxyz(dataset_name)
-ds_size = length(dataset)
-test_size = round(Int, test_ratio * ds_size)
-train_size = ds_size - test_size
+ds_size_all = length(dataset)
 
-println("TOTAL_DATASET_HAS_", ds_size, "_CONFIGURATIONS")
-println("TRAINING_SET_HAS_", train_size, "_CONFIGURATIONS")
-println("TEST_SET_HAS_", test_size, "_CONFIGURATIONS\n")
+test_db = Array{Atoms, 1}()
+train_db = Array{Atoms, 1}()
 
-shuffle!(dataset)
-test_db = dataset[1:test_size]
-train_db = dataset[test_size+1:ds_size]
+if test_ratio != 0
+   sorted_dataset = Dict()
+   for at in dataset
+       pset = at.data["config_type"].data
+       sorted_dataset[pset] = Array{Atoms, 1}()
+   end
+
+   for at in dataset
+       pset = at.data["config_type"].data
+       push!(sorted_dataset[pset], at)
+   end
+   
+   if haskey(sorted_dataset, "mg16_hole")
+      hset = sorted_dataset["mg16_hole"]
+      global train_db = cat(train_db, hset, dims=1)
+      delete!(sorted_dataset, "mg16_hole")
+   end
+  
+   for pset in keys(sorted_dataset)
+       #shuffle!(sorted_dataset[pset])
+       ds_size = length(sorted_dataset[pset])
+       
+       p_tset_len = (test_ratio * ds_size)
+       test_size = round(Int, p_tset_len)
+       step = div(ds_size, test_size)
+
+       mask = falses(ds_size)
+       mask[1:step:end] .= true #Test samples, equally spaced in dataset
+       inv_mask = .!mask #train samples
+
+       p_teset = sorted_dataset[pset][mask]
+       p_trset = sorted_dataset[pset][inv_mask]
+
+       global test_db = cat(test_db, p_teset, dims=1)
+       global train_db = cat(train_db, p_trset, dims=1)
+   end
+
+   for at in test_db
+       temp = at.data["temp"].data
+       at.data["config_type"].data = "T_" * string(temp)
+   end 
+
+else
+   train_db = dataset
+end
+
+te_size = length(test_db)
+tr_size = length(train_db)
+
+println("TOTAL_DATASET_HAS_", ds_size_all, "_CONFIGURATIONS")
+println("TRAINING_SET_HAS_", tr_size, "_CONFIGURATIONS")
+println("TEST_SET_HAS_", te_size, "_CONFIGURATIONS\n")
+
+# shuffle!(dataset)
+# test_db = dataset[1:test_size]
+# train_db = dataset[test_size+1:ds_size]
 
 ##########################
 ##########################
@@ -98,6 +172,8 @@ train_db = dataset[test_size+1:ds_size]
 ##########################
 #####Creating Weights#####
 ##########################
+if alpha != nothing
+
 pressure_sets = Dict()
 for (i, at) in enumerate(train_db)
     press = at.data["ns_P"].data
@@ -141,6 +217,9 @@ for p_set in keys(pressure_sets)
     end
 end
 
+else
+    weights = Dict( "default" => Dict("E" => e_weight, "F" => f_weight, "V" => v_weight))
+end
 ##########################
 ##########################
 
