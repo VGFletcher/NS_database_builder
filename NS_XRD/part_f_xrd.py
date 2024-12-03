@@ -64,6 +64,9 @@ parser.add_argument('-dt', '--temp_step', action='store', help="Temperature step
 parser.add_argument('-o', '--res_prefix', action='store', help="Prefix of files to save xrd data to", type=str, required=True)
 
 parser.add_argument('-V', '--verb', action='store_true', help="Verbosity of search")
+parser.add_argument('-Q', '--QUIP', action='store_true', help="Specifiy if a the XRD input is from QUIP")
+parser.add_argument('-mi', '--min_it', default=1, nargs='?', action='store', help="Option to skip configurations in traj file, this is the smallest iteration number to include", type=int)
+parser.add_argument('-ma', '--max_it', default=-1, nargs='?', action='store', help="Option to skip configurations in traj file, this is the largest iteration number to include", type=int)
 
 args = parser.parse_args()
 
@@ -78,6 +81,10 @@ delta_t = args.temp_step
 res_prefix = args.res_prefix
 
 verbose   = args.verb
+quip = args.QUIP
+
+min_it = args.min_it
+max_it = args.max_it
 
 t_vals = np.arange(start_t, final_t, delta_t)
 
@@ -97,6 +104,14 @@ if verbose:
 
 #Read the energies file
 iterations, energies = read_energies(traj_file)
+
+if max_it==-1:
+    max_it = None
+
+iterations = iterations[min_it-1:max_it]
+energies = energies[iterations]
+print(f'Using configs between {iterations[0]} and {iterations[-1]}')
+
 n_Es = iterations[-1] + 1
 if verbose and rank==0:
     print('Read energies file')
@@ -107,7 +122,18 @@ if verbose and rank==0:
     print('Calculated t independent weights')
     
 #Import the xrd data
-xrd_dat = np.loadtxt(xrd_file)
+if quip:
+    with open(xrd_file, 'r') as f:
+        for i in range(2):
+            d_shape = f.readline().split()[0]
+        bins = int(d_shape[7:])
+    twotheta = np.loadtxt(xrd_file, max_rows=bins, skiprows=2)
+    xrd_dat = np.loadtxt(xrd_file, skiprows=bins+2)
+else:
+    all_xrd_dat = np.loadtxt(xrd_file)
+    twotheta = all_xrd_dat[0]
+    xrd_dat = all_xrd_dat[1:]
+    
 if verbose and rank==0:
     print('Loaded XRD data')
 
@@ -122,15 +148,15 @@ for i in range(t_per_thread):
     B = 1.0/(Kb*T)
     Z, sum_Z = Z_vals(B, log_w, energies)
     
-    weighted_xrd = np.sum(xrd_dat[1:] * np.reshape(Z, (len(Z),1)), axis=0)/sum_Z
-    np.savetxt(res_file, np.reshape(weighted_xrd, (1, len(weighted_xrd))))
+    weighted_xrd = np.sum(xrd_dat * Z.reshape(len(Z),1), axis=0)/sum_Z
+    np.savetxt(res_file, weighted_xrd.reshape(1,len(weighted_xrd)))
 res_file.close()
 comm.barrier()
 
 #Use root thread to concat files
 if rank == 0:
     master_xrd = open(f"{res_prefix}.npy", 'w')
-    np.savetxt(master_xrd, np.reshape(xrd_dat[0], (1,len(xrd_dat[0]))))
+    np.savetxt(master_xrd, twotheta.reshape(1,len(twotheta)))
     for i in range(size):
         thread_xrd_dat = np.loadtxt(f"{res_prefix}.{i}.npy")
         np.savetxt(master_xrd, thread_xrd_dat)

@@ -192,7 +192,7 @@ for at in train_db
     pe = at.data["dft_energy"].data
     cell_v = det(cell(at))
     pv = cell_v * press
-    H = pe + pv
+    H = (pe + pv)/length(at)
     push!(pressure_sets[press][1], i)
     push!(pressure_sets[press][2], H)
 end
