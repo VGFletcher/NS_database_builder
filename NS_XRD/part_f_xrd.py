@@ -65,7 +65,7 @@ parser.add_argument('-o', '--res_prefix', action='store', help="Prefix of files 
 
 parser.add_argument('-V', '--verb', action='store_true', help="Verbosity of search")
 parser.add_argument('-Q', '--QUIP', action='store_true', help="Specifiy if a the XRD input is from QUIP")
-parser.add_argument('-mi', '--min_it', default=1, nargs='?', action='store', help="Option to skip configurations in traj file, this is the smallest iteration number to include", type=int)
+parser.add_argument('-mi', '--min_it', default=0, nargs='?', action='store', help="Option to skip configurations in traj file, this is the smallest iteration number to include", type=int)
 parser.add_argument('-ma', '--max_it', default=-1, nargs='?', action='store', help="Option to skip configurations in traj file, this is the largest iteration number to include", type=int)
 
 args = parser.parse_args()
@@ -107,19 +107,19 @@ it_n, energies = read_energies(traj_file)
 
 #Index of iterations to cut at
 if max_it==-1:
-    max_it = it_n[-1]
+    max_it = len(it_n)
 else:
-    max_it = np.argmin(np.abs(it_n - max_it))
+    max_it = np.argmin(np.abs(it_n - max_it)) + 1
 
 min_it = np.argmin(np.abs(it_n - min_it))
 
 #Create array of index values
-iterations = np.arange(min_it,max_it+1,1, dtype=int)
+iterations = np.arange(min_it,max_it,1, dtype=int)
 
 #Cut of actual iteration numbers and energies
 it_n = it_n[iterations]
 energies = energies[iterations]
-print(f'Using configs between {iterations[0]} and {iterations[-1]}')
+print(f'Using configs between {it_n[0]} and {it_n[-1]}')
 
 #Use largest iteration number to calculate weights
 n_Es = it_n[-1] + 1
