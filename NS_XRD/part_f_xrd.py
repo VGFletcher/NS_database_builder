@@ -103,21 +103,32 @@ if verbose:
     print(f"Rank {rank} starting from {start_t} K to {final_t} K with step {delta_t} K")
 
 #Read the energies file
-iterations, energies = read_energies(traj_file)
+it_n, energies = read_energies(traj_file)
 
+#Index of iterations to cut at
 if max_it==-1:
-    max_it = None
+    max_it = it_n[-1]
+else:
+    max_it = np.argmin(np.abs(it_n - max_it))
 
-iterations = iterations[min_it-1:max_it]
+min_it = np.argmin(np.abs(it_n - min_it))
+
+#Create array of index values
+iterations = np.arange(min_it,max_it+1,1, dtype=int)
+
+#Cut of actual iteration numbers and energies
+it_n = it_n[iterations]
 energies = energies[iterations]
 print(f'Using configs between {iterations[0]} and {iterations[-1]}')
 
-n_Es = iterations[-1] + 1
+#Use largest iteration number to calculate weights
+n_Es = it_n[-1] + 1
 if verbose and rank==0:
     print('Read energies file')
 
 #Calculate the temperature independent weights
-log_w = log_weights(n_Es, K)[iterations]
+#and extract correct weight values using actual iteration numbers
+log_w = log_weights(n_Es, K)[it_n]
 if verbose and rank==0:
     print('Calculated t independent weights')
     
