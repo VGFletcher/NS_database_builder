@@ -66,9 +66,9 @@ dataset_name = "master.edb.extxyz"
 output_name = "o$(order)_d$(degree)"
 model_name = "o$(order)_d$(degree)"
 
-erefs = Dict("Mg" => -1688.821130128)
-elements = [:Mg]
-rcut = 8.2
+erefs = Dict("Ti" => -1587.531990, "Al" => -107.344591, "V" => -1946.496760)
+elements = [:Ti,:Al,:V]
+rcut = 5.0
 
 e_weight = 9.0
 f_weight = 1.0
@@ -83,6 +83,11 @@ repul_weight = 0.0
 #####################
 
 data_keys = (energy_key = "dft_energy", force_key = "dft_forces", virial_key = "dft_virial")
+
+erefs_sym = Dict()
+for key in keys(erefs)
+    erefs_sym[Symbol(key)] = erefs[key]
+end
 
 #rcut = cutoff of interactions
 #order = body order of interactions, creat n+1 body potential
@@ -179,8 +184,9 @@ if alpha != nothing
 
 pressure_sets = Dict()
 for (i, at) in enumerate(train_db)
-    press = at.data["ns_P"].data
-    at.data["config_type"].data = "con_" * string(i)
+    #press = at.data["ns_P"].data
+    #at.data["config_type"].data = "con_" * string(i)
+    press = at.data["config_type"].data
     pressure_sets[press] = [[],[]]
 end
 
@@ -188,13 +194,17 @@ end
 for at in train_db
     press = at.data["ns_P"].data
     i = at.data["config_type"].data
+
+    symbs = chemical_symbols(at)
+    base_ene = sum(getindex.(Ref(erefs_sym), symbs))
     
-    pe = at.data["dft_energy"].data
+    pe = at.data["dft_energy"].data - base_ene
+    
     cell_v = det(cell(at))
     pv = cell_v * press
     H = (pe + pv)/length(at)
-    push!(pressure_sets[press][1], i)
-    push!(pressure_sets[press][2], H)
+    push!(pressure_sets[i][1], i)
+    push!(pressure_sets[i][2], H)
 end
 
 #Rescale all the sets to their lowest enthalpy configuration
@@ -238,6 +248,10 @@ end
 
 println("FINISHED_ACE_FIT\n")
 
+export2lammps(output_name * ".yace", model)
+save_object(model_name * ".jld2", model)
+save_potential(output_name * ".json", model)
+
 ###########################
 ###########################
 
@@ -254,10 +268,6 @@ if (length(test_db) > 0)
    ACEpotentials.linear_errors(test_db, model; data_keys...);
    println("FINISHED_TEST_ERRORS\n")
 end
-
-export2lammps(output_name * ".yace", model)
-save_object(model_name * ".jld2", model)
-save_potential(output_name * ".json", model)
 
 ###########################
 ###########################
