@@ -50,6 +50,11 @@ sett = ArgParseSettings()
         arg_type = Float64
         required = false
         default = nothing
+    "-w"
+        help = "Angular Resolution, lower increases resolution"
+        arg_type = Float64
+        required = false
+        default = 1.5
 end
 parsed_args = parse_args(ARGS, sett)
 
@@ -61,6 +66,7 @@ order      = parsed_args["o"]
 degree     = parsed_args["d"]
 test_ratio = parsed_args["r"]
 alpha      = parsed_args["a"]
+wL         = parsed_args["w"]
 
 dataset_name = "master.edb.extxyz"
 output_name = "o$(order)_d$(degree)"
@@ -97,9 +103,10 @@ model = acemodel(elements = elements,
                      rcut = rcut,
                     order = order,
               totaldegree = degree,
-                     Eref = erefs)
+                     Eref = erefs,
+		     wL=wL)
 
-#prior = smoothness_prior(model)
+prior = smoothness_prior(model; p=1)
 solver = ACEfit.BLR(tol=blr_tol, committee_size=n_members, factorization=:svd)
 
 #####################
@@ -242,9 +249,9 @@ end
 
 println("BEGINNING_ACE_FIT_WITH_", length(model.basis), "_BASIS_FUNCTIONS")
 
-@suppress begin
-	acefit!(model, train_db; solver=solver, data_keys..., weights=weights, repulsion_restraint=repul_rest, restraint_weight=repul_weight);
-end
+#@suppress begin
+	acefit!(model, train_db; solver=solver, prior=prior, data_keys..., weights=weights, repulsion_restraint=repul_rest, restraint_weight=repul_weight);
+#end
 
 println("FINISHED_ACE_FIT\n")
 
