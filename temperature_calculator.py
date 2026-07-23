@@ -12,11 +12,15 @@ import ase
 from ase.io import read, write
 from mpi4py import MPI
 import argparse
+from scipy import constants as sc
+Kb = sc.physical_constants['Boltzmann constant in eV/K'][0]
 
-def calc_temps(dat_file, traj_files, comm, rank, size, verbose=False):
+def calc_temps(dat_file, traj_files, comm, rank, size, verbose=False, added_ke=False):
     """
     This function calculates the temperature of each configuration using the nested sampling analysis file.
     It then saves this value to the .extxyz file so that it can be accessed in one file.
+    If run with GMC then the ns_energy output is without the kinetic energy, but the NS analyse has it.
+    So the KE needs to be subtracted from the analyse output to get an accurate T value.
     """
 
     ts = time.time()
@@ -36,7 +40,7 @@ def calc_temps(dat_file, traj_files, comm, rank, size, verbose=False):
 
     #Try to open data file from ns analyse
     try:
-        dat = np.array(pd.read_csv(dat_file, delim_whitespace=True,skiprows=[0]))
+        dat = np.array(pd.read_csv(dat_file, sep=r'\s+', skiprows=[0]))
         #Extract temperature and enthalpy columns
         T = dat[:,0]
         U = dat[:,3]
@@ -47,9 +51,6 @@ def calc_temps(dat_file, traj_files, comm, rank, size, verbose=False):
     #Divide work between threads
     files_per_thread = round(num_files/size)
     starting_int = files_per_thread * rank
-
-    #Put values into interpolation function to convert any enthalpy value to a temperature
-    U_T_func = interpolate.interp1d(U, T, fill_value="extrapolate")
 
     if ((rank == 0) and (verbose==True)):
         t1 = time.time()
@@ -70,6 +71,14 @@ def calc_temps(dat_file, traj_files, comm, rank, size, verbose=False):
             print("Error reading traj file {}".format(traj_files[it]))
             comm.Abort()
 
+        if not added_ke and fs==0:
+            N_DOF = len(all_strucs[0])*3
+            KE = N_DOF*Kb*T/2
+            U -= KE
+            
+        #Put values into interpolation function to convert any enthalpy value to a temperature
+        U_T_func = interpolate.interp1d(U, T, fill_value="extrapolate")
+        
         #Loop through all structures
         len_all_strucs = len(all_strucs)
 
@@ -118,12 +127,14 @@ parser = argparse.ArgumentParser(description='Calculate the temperature of confi
 parser.add_argument('-i', '--traj_regex', action='store', help="Regex to identify the trajectory files to search", type=str, required=True)
 parser.add_argument('-d', '--dat_file', action='store', help="Name of the ns_analyse results file", type=str, required=True)
 parser.add_argument('-V', '--verb', action='store_true', help="Verbosity of calculation")
+parser.add_argument('-K', '--ke_inc', action='store_true', help="Verbosity of calculation")
 
 args = parser.parse_args()
 
 traj_regex = args.traj_regex
 dat_file   = args.dat_file
 verbose   = args.verb
+ke_included = args.ke_inc
 
 #Get file names and broadcast, since glob may not return the order reliably
 if (rank == 0):
@@ -135,4 +146,4 @@ else:
 traj_files = comm.bcast(traj_files, root=0)
 
 #Call calculator
-calc_temps(dat_file, traj_files, comm, rank, size, verbose=verbose)
+calc_temps(dat_file, traj_files, comm, rank, size, verbose=verbose, added_ke=ke_included)
