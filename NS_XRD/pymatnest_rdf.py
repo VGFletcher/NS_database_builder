@@ -17,7 +17,7 @@ import ase.geometry.analysis as geom_ana
 from mpi4py import MPI
 import argparse
 
-def calc_rdf(concat_name, results_prefix, comm, rank, size, verbose=False):
+def calc_rdf(concat_name, results_prefix, els, cutoff, bins, comm, rank, size, verbose=False):
     """
     """
 
@@ -59,7 +59,7 @@ def calc_rdf(concat_name, results_prefix, comm, rank, size, verbose=False):
         struc.wrap()
         struc*=[3,3,3]
 
-        rdf, x = geom_ana.get_rdf(struc, 6.0, 200, elements=(26,28))
+        rdf, x = geom_ana.get_rdf(struc, cutoff, bins, elements=(els[0],els[1]))
 
         intensities.append(rdf)
     np.savetxt(thread_rdf, np.reshape(intensities, (configs_per_thread,len(rdf))))
@@ -99,6 +99,9 @@ parser = argparse.ArgumentParser(description='Create a database from nested samp
 
 parser.add_argument('-i', '--concat_name', action='store', help="Name of the file with all trajectories in iteration order", type=str, required=True)
 parser.add_argument('-o', '--res_prefix', action='store', help="Prefix of files to save xrd data to", type=str, required=True)
+parser.add_argument('-r', '--cutoff', action='store', help="RDF cutoff", type=float, required=True)
+parser.add_argument('-e', '--el_el_int', action='store', help="Two elements for interaction", type=str, required=True)
+parser.add_argument('-b', '--bins', action='store', help="N bins def. 200", type=int, default=200)
 
 parser.add_argument('-V', '--verb', action='store_true', help="Verbosity of search")
 
@@ -106,8 +109,12 @@ args = parser.parse_args()
 
 concat_name = args.concat_name
 results_prefix = args.res_prefix
+cutoff = args.cutoff
+bins = args.bins
+e_e_i = args.el_el_int
+els = [int(el) for el in e_e_i.split()]
 
 verbose   = args.verb
 
 #Call xrd calculator
-calc_rdf(concat_name, results_prefix, comm, rank, size, verbose=verbose)
+calc_rdf(concat_name, results_prefix, els, cutoff, bins, comm, rank, size, verbose=verbose)

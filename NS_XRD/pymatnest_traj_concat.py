@@ -1,6 +1,8 @@
 #This code takes in the trajectory ouput files from a multithreaded pymatnest nested sampling run,
 #sorts them by iteration number, and saves them to a single file
 #pymatnest: https://github.com/libAtoms/pymatnest/tree/master
+#!!CODE SORTS BY NS_ENERGY NOT ITERATION NUMBER!!
+#Any reference to iteration number is now outdated 
 
 #This code was authored by @V.G.Fletcher
 #UK Ministry of Defence Copr. Crown owned copyright 2024/AWE
@@ -59,7 +61,7 @@ def traj_concat(traj_files, concat_name, comm, rank, size, verbose=False):
         for j in range(loop_len):
             struc = all_strucs[j]
 
-            itera = struc.info['iter']
+            itera = struc.info['ns_energy']
                 
             data.append([it, j, itera])
         struc_store += all_strucs
@@ -71,7 +73,7 @@ def traj_concat(traj_files, concat_name, comm, rank, size, verbose=False):
     #Sort the arrays based on iteration number
     data       = np.array(data)
     iterations = data[:,2]
-    sort_ind   = np.argsort(iterations)
+    sort_ind   = np.argsort(iterations)[::-1]
 
     data = data[sort_ind]
     strucs_sorted = [struc_store[i] for i in sort_ind]
@@ -96,14 +98,14 @@ def traj_concat(traj_files, concat_name, comm, rank, size, verbose=False):
             lowest_iteration = data[0][2]
         except:
             #If all iterations have been selected set this to infinity
-            lowest_iteration = np.inf
+            lowest_iteration = -np.inf
 
         #Gather all the lowest iteration numbers to root
         lowest_its = comm.gather(lowest_iteration, root=0)
 
         #Use root to get the global lowest
         if (rank == 0):
-            THREAD_LOC = np.argsort(lowest_its)[0]
+            THREAD_LOC = np.argsort(lowest_its)[::-1][0]
         else:
             THREAD_LOC = -1
 

@@ -24,18 +24,29 @@ def read_energies(file_name):
         #VO = struc.info['volume']
 
         energies.append(enth)
-        iterations.append(struc.info['iter'])
-    
-    return np.array(iterations), np.array(energies)
+        iterations.append(struc.info['config_n_global'])
 
-def log_weights(n_Es, K):
+    e0 = np.min(energies)
+    return np.array(iterations), np.array(energies)-e0, e0
+
+# def log_weights(n_Es, K):
+#     i_vals = np.arange(0, n_Es, 1)
+    
+#     log_X = np.zeros_like(i_vals) + np.log(K/(K+1))
+#     log_Xn = np.cumsum(log_X)
+    
+#     log_w = log_Xn - np.log(K+1)
+#     return log_w
+
+def log_weights(n_Es, K, n_cull):
     i_vals = np.arange(0, n_Es, 1)
-    
-    log_X = np.zeros_like(i_vals) + np.log(K/(K+1))
-    log_Xn = np.cumsum(log_X)
-    
-    log_w = log_Xn - np.log(K+1)
+    lost_K = i_vals%n_cull
+
+    log_X = np.zeros_like(i_vals) - (1/(K-lost_K))
+    log_Xn = np.cumsum(log_X[:-1])
+    log_w = log_Xn + np.log(1-np.exp(log_X[1:]))
     return log_w
+    
 
 def Z_vals(B, log_weights, energies):
     log_z = log_weights - (energies * B)
@@ -60,6 +71,7 @@ parser.add_argument('-xrd', '--xrd_data', action='store', help="Name of the file
 parser.add_argument('-ti', '--starting_temp', action='store', help="Starting temp for analysis", type=float, required=True)
 parser.add_argument('-tf', '--final_temp', action='store', help="Final temp for analysis", type=float, required=True)
 parser.add_argument('-dt', '--temp_step', action='store', help="Temperature step for analysis", type=float, required=True)
+parser.add_argument('-c', '--n_cull', action='store', help="Walkers culled per iteration", type=int, default=1)
 
 parser.add_argument('-o', '--res_prefix', action='store', help="Prefix of files to save xrd data to", type=str, required=True)
 
@@ -77,6 +89,7 @@ xrd_file = args.xrd_data
 start_t = args.starting_temp
 final_t = args.final_temp
 delta_t = args.temp_step
+n_cull = args.n_cull
 
 res_prefix = args.res_prefix
 
@@ -103,7 +116,8 @@ if verbose:
     print(f"Rank {rank} starting from {start_t} K to {final_t} K with step {delta_t} K")
 
 #Read the energies file
-it_n, energies = read_energies(traj_file)
+it_n, energies, e0 = read_energies(traj_file)
+
 
 #Index of iterations to cut at
 if max_it==-1:
@@ -122,13 +136,13 @@ energies = energies[iterations]
 print(f'Using configs between {it_n[0]} and {it_n[-1]}')
 
 #Use largest iteration number to calculate weights
-n_Es = it_n[-1] + 1
+n_Es = it_n[-1] + 2
 if verbose and rank==0:
     print('Read energies file')
 
 #Calculate the temperature independent weights
 #and extract correct weight values using actual iteration numbers
-log_w = log_weights(n_Es, K)[it_n]
+log_w = log_weights(n_Es, K, n_cull)[it_n]
 if verbose and rank==0:
     print('Calculated t independent weights')
     
